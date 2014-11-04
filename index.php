@@ -81,13 +81,8 @@ foreach ( $sources as $source ) {
 }
 
 function pngify( $svg ) {
-	$sampling = 16;
-	$dpi = 72;
-	$density = $dpi * $sampling;
-	$scale = 100 / $sampling;
 	$process = proc_open(
-		"/opt/ImageMagick/bin/convert -antialias -background transparent -density {$density} " .
-			"-resize {$scale}% -unsharp 1.5x1.5+1.0+0.1 -background none svg:- png:-",
+		"/usr/local/bin/rsvg-convert",
 		array( 0 => array( 'pipe', 'r' ), 1 => array( 'pipe', 'w' ) ),
 		$pipes
 	);
