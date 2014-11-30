@@ -61,13 +61,24 @@ foreach ( $sources as $source ) {
 	echo '<tr><td>' . basename( $source, '.svg' ) . '</td>';
 
 	$data = file_get_contents( $source );
+	$data = preg_replace_callback( '/d="(.+?)"/', function ( $matches ) {
+		$pathdata = $matches[1];
+		// Make sure there is at least one space between numbers, and that leading zero is not omitted.
+		// rsvg has issues with syntax like "M-1-2" and "M.445.483" and especially "M-.445-.483".
+		$pathdata = preg_replace( '/(-?)(\d*\.\d+|\d+)/', ' ${1}0$2 ', $pathdata );
+		// Strip unnecessary leading zeroes for prettiness, not strictly necessary
+		$pathdata = preg_replace( '/([ -])0(\d)/', '$1$2', $pathdata );
+		return "d=\"$pathdata\"";
+	}, $data );
+	$originalData = $data;
+
 	echo '<td><img src="data:image/svg+xml;base64,' . base64_encode( $data ) . '"></td>';
 	echo '<td><img src="data:image/png;base64,' . base64_encode( pngify( $data ) ) . '"></td>';
 
 	foreach ( $colors as $variant => $color ) {
 		if ( in_array( $source, $variants[$variant] ) ) {
 			$svg = new DomDocument;
-			$svg->load( $source );
+			$svg->loadXml( $originalData );
 			$svg->getElementsByTagName( 'g' )->item( 0 )->setAttribute( 'fill', $color );
 			$data = $svg->saveXml();
 
